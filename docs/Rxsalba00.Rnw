@@ -1,0 +1,332 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+
+% This is a simple template for a LaTeX document using the "article" class.
+% See "book", "report", "letter" for other types of document.
+
+\documentclass[11pt]{article} % use larger type; default would be 10pt
+
+\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
+\usepackage[pdftex]{graphicx}
+\usepackage[czech]{babel}
+%%% Examples of Article customizations
+% These packages are optional, depending whether you want the features they provide.
+% See the LaTeX Companion or other references for full information.
+
+%%% PAGE DIMENSIONS
+\usepackage{geometry} % to change the page dimensions
+\geometry{a4paper} % or letterpaper (US) or a5paper or....
+% \geometry{margins=2in} % for example, change the margins to 2 inches all round
+% \geometry{landscape} % set up the page for landscape
+%   read geometry.pdf for detailed page layout information
+
+\usepackage{graphicx} % support the \includegraphics command and options
+
+% \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+
+%%% PACKAGES
+\usepackage{booktabs} % for much better looking tables
+\usepackage{array} % for better arrays (eg matrices) in maths
+\usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+\usepackage{subfig} % mak it possible to include more than one captioned figure/table in a single float
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{listings}
+% These packages are all incorporated in the memoir class to one degree or another...
+
+%%% HEADERS & FOOTERS
+\usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
+\pagestyle{fancy} % options: empty , plain , fancy
+\renewcommand{\headrulewidth}{0pt} % customise the layout...
+\lhead{}\chead{}\rhead{}
+\lfoot{}\cfoot{\thepage}\rfoot{}
+
+%%% SECTION TITLE APPEARANCE
+\usepackage{sectsty}
+\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+% (This matches ConTeXt defaults)
+
+%%% ToC (table of contents) APPEARANCE
+\usepackage[nottoc,notlof,notlot]{tocbibind} % Put the bibliography in the ToC
+\usepackage[titles,subfigure]{tocloft} % Alter the style of the Table of Contents
+\renewcommand{\cftsecfont}{\rmfamily\mdseries\upshape}
+\renewcommand{\cftsecpagefont}{\rmfamily\mdseries\upshape} % No bold!
+
+%%% R packages
+\usepackage{longtable}
+
+%%% Load R data
+<<echo=FALSE>>= 
+source('../analysis/preparation.R')
+@
+%%% END Load R data
+%%% END Article customizations
+%\providecommand{\OO}[1]{\operatorname{O}\bigl(#1\bigr)}
+%%% The "real" document content comes below...
+
+\begin{document}
+\begin{center}
+\includegraphics[width=5cm]{fig/fit-zp2}
+\\[1cm]
+{\huge \bfseries EVO Projekt}
+\\[0.5cm]
+Vojtěch \textsc{Šalbaba}, xsalba00
+\\[0.5cm]
+
+\end{center}
+\section{Zadání}
+Cílem projektu je řešení problému obchodního cestujícího (Traveling Salesman Problem - TSP) pomocí techniky ACO.
+
+Projekt implementuje metaheuristický algoritmus AntSystem (AS) v programovacím jazyce Ruby a porovnává dosažené výsledky s algoritmem RandomSearch (RS).
+Porovnává i optimalizační techniky v rámci AS a jejich vliv na dosažený výsledek.
+
+\section{Ant Colony Optimization}
+
+\begin{quote}{\cite{dorigo2004}}
+Ant colony optimization is a metaheuristic in which a colony of artificial ants cooperate in finding good solutions to difficult discrete optimization problems.
+Cooperation is a key design component of ACO algorithms:
+The choice is to allocate the computational resources to a set of relatively simple agents (artificial ants) that communicate indirectly by stigmergy,
+that is, by indirect communication mediated by the environment.
+Good solutions are an emergent property of the agents’ cooperative interaction.
+\end{quote}
+
+ACO je metaheuristika (heuristika pro řízení heuristik), kterou lze využít pro řešení jak statických, tak dynamických problémů.
+Výpočet probíhá průchodem umělých mravenců váženě náhodnou chůzí po řešení reprezentovaném úplným grafem.
+Agenti spolu komunikují nepřímo přes sdílené prostředí a sami jsou velmi primitivní. Synergií práce mnoha mravenců se kolonie blíží optimálnímu řešení.
+ACO má mnoho podvariant, dobrým přehledem je \cite{dorigo2004}. V tomto projektu jsme implementovali variantu AntSystem.
+
+\section{AntSystem}
+AntSystem je jedním z prvních  uveřejněných algoritmů. Jedná se již o překonanou variantu.
+Lepšími alternativami jsou Elitist AS, Rank-Based AS nebo Ant Colony System.
+Všechny tyto alternativy z AS vycházejí, často jsou definovány pouze drobnou změnou vůči AS.
+AS slouží i jako jakýsi základ, vůči kterému se měří výkon alternativ. Kvůli této základnosti jsme zvolili pro implementaci právě AS.
+
+AS bychom mohli zapsat následujícím pseudokódem:
+\begin{verbatim}
+procedure AntSystem
+  inicializuj;
+  while (not ukoncujici podminka) do
+    sestav reseni;
+    optimalizuj reseni;
+    aktualizuj nejlepsi reseni;
+    aktualizuj feromony;
+  end-while
+end-procedure
+\end{verbatim}
+
+\subsubsection*{Konstrukce řešení} \label{sssec:as-konstr}
+Ve fázi konstrukce řešení zadaný počet mravenců $m$ (obecně asynchronně a nezávisle) řeší zadaný problém a každý z nich nalezne jedno (téměř jistě ne optimální) řešení procházením konstrukčního grafu $G$.
+Sada heuristických informací $\eta_{ij}$ o kvalitě cesty z $i$ do $j$  se používá pro zlepšení kvality řešení (např. pohyb do blízkého města je v problému obchodního cestujícího obecně dobré, tah vedoucí k sebrání figur je obecně dobrý).
+Mravenec $k$ vybere cestu z $i$ do $j$ s pravděpodobností
+
+\begin{equation}\label{eq:aco-pravdepodnost}
+p_{ij} = \frac{(\tau_{ij})^\alpha(\eta_{ij})^\beta}{\sum_{l \in S_{i}^{k}}(\tau_{il})^\alpha (\eta_{il})^\beta}
+\end{equation}
+
+kde $S_i^k$ je okolí vrcholu $i$ pro mravence $k$.
+Poměr parametrů $\alpha$ a $\beta$ ovliv\v{n}uje poměr vlivu obecných znalostí $\eta$ a předchozích řešení $\tau$ na rozhodování mravenců.
+Fáze konstrukce řešení končí, jakmile všichni mravenci sestaví řešení.
+
+\subsubsection*{Optimalizace nalezených řešení}
+Nalezená řešení se pokusíme ještě před jejich zanesením do feromonové funkce optimalizovat.
+Tato optimalizace je závislá na řešeném problému.
+Z cesty můžeme například odstranit kružnice nebo se ji pokusit vylepšit různými variantami Local Search.
+
+\subsubsection*{Aktualizace nejlepšího řešení}
+Řešení nalezená v současné iteraci se porovnají s dosavadním celkově nejlepším řešením. Pokud je některé řešení lepší než celkově nejlepší řešení, použijeme ho jako nové celkově nejlepší.
+
+\subsubsection*{Aktualizace feromonů} \label{sssec:as-aktual}
+Fáze aktualizace feromonů proběhne ve dvou krocích, vyprchávání a ukládání. Nejdříve ze všech cest vyprchají feromony dle rovnice:
+
+\begin{equation}\label{eq:aco-vyprchavani}
+\tau_{ij} \leftarrow (1 - \rho)\tau_{ij}  \qquad \forall(i,j) \in H
+\end{equation}
+
+Uvědomme si, že v AS probíhá vyprchávání až po konstrukci celé cesty. Hodnoty $\rho$ se tedy volí vyšší, typicky $0.5$. Po vyprchání feromonů z cest dojde k ukládání nových.
+Feromonovou funkci pro každou hranu navýšíme o feromonovou hodnotu rovnou součtu kvality cest všech mravenců, jejichž řešení hranu obsahuje.
+
+\begin{equation}\label{eq:as-ukladani}
+\tau_{ij} \leftarrow \tau_{ij} + \sum_{k=1}^m \Delta \tau_{ij}^k
+\end{equation}
+
+$\Delta \tau_{ij}^k$ označuje kvalitu cesty $ij$ pro mravence $k$. Výpočet $\Delta \tau_{ij}^k$ volíme dle povahy problému.
+Kvalitu cesty volíme z intervalu $\left< 0, 1 \right>$. \cite{dorigo2004} \cite{salbaba2010}
+
+\subsection{Parametry algoritmu AS}
+Mezi nastavitelné parametry běhu AS patří
+	\begin{itemize}
+		\item počet mravenců v jedné iteraci $m$;
+		\item počet iterací ;
+		\item váhy přisuzované následování ostatních mravenců a použití metriky ($\alpha$ a $\beta$);
+    \item optimalizační funkce se volí dle problému
+    \item míra vyprchávání uložených feromonů $\rho$.
+	\end{itemize}
+
+
+\section{Problém obchodního cestujícího}
+\begin{quote}{\cite{wikipedia:tsp}}
+Problém obchodního cestujícího (anglicky Travelling Salesman Problem – TSP) je obtížný diskrétní optimalizační problém,
+matematicky vyjadřující a zobecňující úlohu nalezení nejkratší možné cesty procházející všemi zadanými body na mapě.
+\end{quote}
+
+Z matematického pohledu se jedná o úlohu nalezení nejkratší Hamiltonovské kružnice v grafu.
+Délku nalezené kružnice popisujeme cenovou funkcí. Jedná se tedy o minimalizační úlohu.
+
+Mnoho instancí TSP bylo shromážděno v knihovně TSPLib \cite{tsplib}.
+Z této knihovny jsme vybrali problémy \emph{berlin52} (52 vrcholový graf) a \emph{bier127} (127 vrcholový graf).
+Jedná se o symetrické problémy (cesta z A do B je stejná jako z B do A) s již nalezenými optimálními řešeními.
+Jako cena cesty z A do B se počítá euklidovská vzdálenost mezi těmito body.
+Optimální řešení \emph{berlin52} je \Sexpr{berlin52.optimum}, optimálním řešením \emph{bier127} je \Sexpr{bier127.optimum}.
+
+\section{Převod problému na instanci ACO}
+Převedení problému TSP na úplný orientovaný graf jsme provedli velmi přímočaře.
+Každé město je reprezentováno jedním vrcholem. Vzdálenosti mezi městy jsou reprezentovány ohodnocenými hranami.
+Cenová funkce je definována jako součet ohodnocení všech hran na dané Hamiltonovské kružnici.
+
+\section{Algoritmus RandomSearch}
+Algoritmus RandomSearch je nejjednodušším způsobem prohledávání stavového prostoru. Pouze se generují náhodná řešení a uchovává se nejlepší dosažené.
+Používá se pro rychlé nalezení slibného startovacího místa pro pokročilejší heuristiky, protože jeho výpočetní cena je zanedbatelná.
+
+Algoritmus, který nedosáhne lepších výsledků než RandomSearch považujeme za nepoužitelný.
+
+V pseudokódu zapíšeme RS takto:
+
+\begin{verbatim}
+procedure RandomSearch
+  Nejlepsi = nahodne reseni;
+  while (not ukoncujici podminka) do
+    kandidat = nahodne reseni;
+    if Cena(kandidat) < Cena(Nejlepsi) then
+      Nejlepsi = kandidat
+    end
+  end-while
+end-procedure
+\end{verbatim}
+
+\begin{figure}[p]
+\begin{center}
+<<echo=FALSE, fig=TRUE>>=
+berlin.results.noopt <- berlin52.results[berlin52.results$opt == "noopt",]$aco
+histogram <- hist(berlin.results.noopt, 
+  xlab="Cena", 
+  ylab="Četnost",
+  main="Berlin52 bez optimalizace",
+  breaks = 7
+  )
+rug(jitter(berlin.results.noopt))
+histogram.break <- histogram$breaks[2] - histogram$breaks[1]
+@
+\caption{Histogram výsledků algoritmu ACO pro instanci Berlin52.
+Optimální řešení je \Sexpr{berlin52.optimum}. Pod histogramem jsou zaznačeny konkrétní výsledky. 
+Jeden sloupec má šířku \Sexpr{histogram.break}}
+\label{fig:berlinnoopt}
+\end{center}
+\end{figure}
+
+\begin{figure}[p]
+\begin{center}
+<<echo=FALSE, fig=TRUE>>=
+berlin.results.twoopt <- berlin52.results[berlin52.results$opt == "twoopt",]$aco
+histogram <- hist(berlin.results.twoopt, 
+  xlab="Cena", 
+  ylab="Četnost",
+  main="Berlin52 s optimalizací twoopt",
+  breaks = 8
+  ) 
+rug(jitter(berlin.results.twoopt))
+histogram.break <- histogram$breaks[2] - histogram$breaks[1]
+@
+\caption{Histogram výsledků algoritmu ACO pro instanci Berlin52. Optimalizováno twoopt metodou.
+Optimální řešení je \Sexpr{berlin52.optimum}. Pod histogramem jsou zaznačeny konkrétní výsledky. 
+Jeden sloupec má šířku \Sexpr{histogram.break}}
+\label{fig:berlintwoopt}
+\end{center}
+\end{figure}
+
+\section{Dosažené výsledky}
+Algoritmus jsme inicializovali s 30ti mravenci a vyprcháváním feromonů nastaveným na 0,6. Učení jsme zastavili po 50ti iteracích.
+Dle očekávání algoritmus na hlavu poráží algoritmus RandomSearch. Zajimavým zjištěním je, že přidání optimalizace 2-opt
+nemělo pozorovatelný vliv na kvalitu výsledků. Jednotlivá řešení byla optimalizována, ale dle našeho názoru silný důraz na "exploitation"
+AS algoritmu způsobil, že vylepšení draze spočítaná optimalizační funkcí byla kolonií samovolně objevena téměř ihned během další iterace.
+
+Optimalizační funkce měla ale výrazný vliv na dobu výpočtu, protože 2-opt má exponenciální složitost oproti lineární složitosti AS.
+
+Ve výsledku se nám podařilo velmi přiblížit teoretickému optimu obou instancí. Výsledky jsou shrnuty v tabulkách \ref{tab:berlin} a \ref{tab:bier}. 
+V sloupci \verb!n! je počet experimentů. V sloupci \verb!optimum! je poměr dosaženého výsledku k optimu instance.
+
+Průběh učení algoritmu je na obrázcích \ref{fig:berlinlearn} a \ref{fig:bierlearn}. Za pozornost stojí prudké vylepšení během prvních 10ti iterací.
+V grafu vidíme na ose $x$ číslo iterace a na ose $y$ průměrnou cenu řešení v dané iteraci.
+
+Rozložení dosažených výsledků vidíme na obrázcích \ref{fig:berlinnoopt} a \ref{fig:berlintwoopt}. Vidíme že algoritmus poměrně konzistentně dosahuje výsledku blízko optimu.
+
+\begin{figure}[p]
+\begin{center}
+<<echo=FALSE, fig=TRUE>>=
+source('../analysis/plotberlin52.R')
+@
+\caption{Zprůměrovaný průběh učení ACO algoritmu na instanci Berlin52.
+Optimální řešení \Sexpr{berlin52.optimum} zaznačeno vodorovnou čarou}
+\label{fig:berlinlearn}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[p]
+\begin{center}
+<<echo=FALSE, fig=TRUE>>=
+source('../analysis/plotbier127.R')
+@
+\caption{Zprůměrovaný průběh učení ACO algoritmu na instanci Bier127.
+Optimální řešení \Sexpr{bier127.optimum} zaznačeno vodorovnou čarou}
+\label{fig:bierlearn}
+\end{center}
+\end{figure}
+
+\begin{table}
+<<echo=FALSE, results=tex>>=
+source('../analysis/statsberlin52.R')
+@
+
+<<echo=FALSE, results=tex>>=
+source('../analysis/statsbier127.R')
+@
+\end{table}
+
+\section{Programová dokumentace}
+Program je rozdělen do několika jednoduchých skriptů dle účelu obsažených funkcí.
+Vstupním bodem je soubor as-clever\_algorithms.rb.
+V souboru problem.rb jsou definovany TSP instance \em berlin52 \em a \em bier127 \em{}.
+V souboru optimizations.rb je definovan algoritmus optimalizace instance TSP.
+Soubor export.rb je vyhrazen pro metody pro vypis nalezenych reseni.
+
+Proces učení se spustí následovně:
+
+\begin{lstlisting}
+$ ruby as-clever_algorithms.rb [optimalizace [problem]]
+\end{lstlisting}
+
+kde \texttt{optimalizace} může nabývat hodnot \texttt{noopt twoopt} a \texttt{problem} hodnot \texttt{berlin52 bier127}.
+Výchozí hodnoty pro \texttt{optimalizace} je \texttt{noopt} a výchozí hodnotou \texttt{problem} je \texttt{berlin52}.
+
+\begin{thebibliography}{9}
+
+\bibitem{dorigo2004}
+  Marco Dorigo, Thomas Stutzle,
+  \emph{Ant colony Optimization}.
+  MIT Press, 2004.
+
+\bibitem{tsplib}
+  TSPLib, \href{http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/}{Internetová stránka}
+
+\bibitem{wikipedia:tsp}
+  Wikipedia, \href{http://cs.wikipedia.org/wiki/Probl%C3%A9m_obchodn%C3%ADho_cestuj%C3%ADc%C3%ADho}{Problém obchodního cestujícího}
+
+\bibitem{salbaba2010}
+  Vojtěch Šalbaba
+  \emph{Samoučící algoritmus pro deskové hry}.
+  Bakalářská práce, Přírodovědecká fakulta Univerzity Palackého, Katedra informatiky
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,116 @@
+% !TEX TS-program = pdfcslatex
+% !TEX encoding = UTF-8 Unicode
+
+\documentclass{beamer}
+
+\mode<presentation> {
+  \usetheme{Warsaw}
+  \setbeamercovered{transparent}
+}
+
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage{palatino}
+\usepackage{graphicx}
+%%% Load R data
+<<echo=FALSE>>=
+source('../analysis/preparation.R')
+@
+
+\title{Aplikace ACO na TSP}
+\author{Vojtěch Šalbaba, xsalba00}
+\institute{FIT}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}
+	\frametitle{TSP}
+	\begin{itemize}
+		\item TSPLib
+		\item Instance Berlin52, Bier127
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{TSP Berlin52 (optimum \Sexpr{berlin52.optimum})}
+  \begin{center}
+  \includegraphics{fig/berlin52.png}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{TSP Bier127 (optimum \Sexpr{bier127.optimum})}
+  \begin{center}
+  \includegraphics{fig/bier127.png}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{Výsledky}
+	\begin{itemize}
+		\item Testoval jsem AS s optimalizací cesty i bez ní
+    \item Pro srovnání jsem paralelně pouštěl RandomSearch
+    \item Pro každou variantu běželo 20 běhů po 50ti iteracích po 30ti mravencích
+		\item RS běžel jedenkrát za každého mravence (1500krát v jednom běhu)
+		\item Výsledky byly agregovány průměrem v rámci iterace
+		\item AS vykazuje poměrně malou odchylku a interkvartální rozptyl
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Heuristiky a optimalizace}
+\begin{itemize}
+  \item Použil jsem heuristiku "bližší město - lepší"
+  \item Cesta je optimalizována během algoritmu 2-opt \\
+  Zkusí se cesta "přeříznout" a zase "spojit" na dvou místech a podívame se jestli je výsledná cesta kratší.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Výsledky Berlin52 (optimum \Sexpr{berlin52.optimum})}
+<<echo=FALSE, results=tex>>=
+  source('../analysis/statsberlin52presentation.R')
+@
+\end{frame}
+
+\begin{frame}
+\frametitle{Výsledky Berlin52}
+\begin{center}
+<<echo=FALSE, fig=TRUE>>=
+  source('../analysis/plotberlin52.R')
+@
+\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Výsledky Bier127}
+<<echo=FALSE, results=tex>>=
+source('../analysis/statsbier127presentation.R')
+@
+\end{frame}
+
+\begin{frame}
+\frametitle{Výsledky Bier127}
+\begin{center}
+<<echo=FALSE, fig=TRUE>>=
+  source('../analysis/plotbier127.R')
+@
+\end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{Závěry}
+\begin{itemize}
+\item AS je účinný algoritmus
+\item AS konverguje rychle (pouze cca \Sexpr{30*10} běhů k prvním solidním výsledkům)
+\item Optimalizace 2-opt je časově náročná a slabá - nijak nezlepšila získané výsledky a měla velký dopad na časovou složitost.
+\item Bylo by zajimavé použít buď pokročilejší optimalizaci (2,5-opt, 3-opt) nebo použít pro optimalizaci jinou heuristiku (Simulated Annealing nebo Stochastic Hill Climbing)
+\item Chyba - Při generovaní jsme neukládali nejlepší dosaženou cestu, pouze její hodnotu. Přegenerovat?
+\item Časová náročnost s 2-opt.
+\end{itemize}
+\end{frame}
+\end{document}
