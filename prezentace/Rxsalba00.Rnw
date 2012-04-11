@@ -12,6 +12,14 @@
 \usepackage[utf8x]{inputenc}
 \usepackage{palatino}
 \usepackage{graphicx}
+
+\usepackage{longtable}
+\usepackage{amsmath}
+\usepackage[czech]{babel}
+
+\usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+
 %%% Load R data
 <<echo=FALSE>>=
 source('../analysis/preparation.R')
@@ -38,14 +46,14 @@ source('../analysis/preparation.R')
 \begin{frame}
 	\frametitle{TSP Berlin52 (optimum \Sexpr{berlin52.optimum})}
   \begin{center}
-  \includegraphics{fig/berlin52.png}
+  \includegraphics{fig/berlin52}
   \end{center}
 \end{frame}
 
 \begin{frame}
 	\frametitle{TSP Bier127 (optimum \Sexpr{bier127.optimum})}
   \begin{center}
-  \includegraphics{fig/bier127.png}
+  \includegraphics{fig/bier127}
   \end{center}
 \end{frame}
 
@@ -87,7 +95,7 @@ source('../analysis/preparation.R')
 \end{frame}
 
 \begin{frame}
-	\frametitle{Výsledky Bier127}
+	\frametitle{Výsledky Bier127 (optimum \Sexpr{bier127.optimum})}
 <<echo=FALSE, results=tex>>=
 source('../analysis/statsbier127presentation.R')
 @
@@ -106,10 +114,9 @@ source('../analysis/statsbier127presentation.R')
 \frametitle{Závěry}
 \begin{itemize}
 \item AS je účinný algoritmus
-\item AS konverguje rychle (pouze cca \Sexpr{30*10} běhů k prvním solidním výsledkům)
+\item AS konverguje rychle (pouze cca \Sexpr{30*10} kandidátních řešení k prvním solidním výsledkům)
 \item Optimalizace 2-opt je časově náročná a slabá - nijak nezlepšila získané výsledky a měla velký dopad na časovou složitost.
 \item Bylo by zajimavé použít buď pokročilejší optimalizaci (2,5-opt, 3-opt) nebo použít pro optimalizaci jinou heuristiku (Simulated Annealing nebo Stochastic Hill Climbing)
-\item Chyba - Při generovaní jsme neukládali nejlepší dosaženou cestu, pouze její hodnotu. Přegenerovat?
 \item Časová náročnost s 2-opt.
 \end{itemize}
 \end{frame}

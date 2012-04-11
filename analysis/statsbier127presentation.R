@@ -1,8 +1,15 @@
 ### code chunk number 5: Rxsalba00.Rnw:316-320
 ###################################################
   cap = 'Statistické parametry výsledků běhu algoritmů na instanci bier127'
-  stats = list("n", "min", "mean", "s", "iqr", "optimum \\%"=function(x){return(min(x)*100/bier127.optimum)})
+  stats = list("n", "min", "max", "median", "s", "optimum"=function(x){return(min(x)/bier127.optimum)})
 
-  tableContinuous(vars = bier127.results, longtable=FALSE, cap = cap, stats = stats, )
-
-
+  tableContinuous(vars = list(bier127.results$aco[bier127.results$opt == "noopt"],
+     bier127.results$aco[bier127.results$opt == "twoopt"],
+     bier127.results$random[bier127.results$opt == "twoopt" || bier127.results$opt == "noopt"]
+     ),
+    prec=3,
+    stats = stats,
+    longtable=FALSE,
+    nams=c("Bez optimalizace", "Two-opt", "Random"),
+    lab= "tab:bier",
+    cap = cap)
