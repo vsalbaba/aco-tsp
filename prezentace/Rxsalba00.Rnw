@@ -95,6 +95,24 @@ source('../analysis/preparation.R')
 \end{frame}
 
 \begin{frame}
+\frametitle{Výsledky Berlin52 (optimum \Sexpr{berlin52.optimum})}
+\begin{center}
+<<echo=FALSE, fig=TRUE>>=
+  source('../analysis/berlin52histogram-noopt.R')
+@
+\end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{Výsledky Berlin52 (optimum \Sexpr{berlin52.optimum})}
+\begin{center}
+<<echo=FALSE, fig=TRUE>>=
+  source('../analysis/berlin52histogram-twoopt.R')
+@
+\end{center}
+\end{frame}
+
+\begin{frame}
 	\frametitle{Výsledky Bier127 (optimum \Sexpr{bier127.optimum})}
 <<echo=FALSE, results=tex>>=
 source('../analysis/statsbier127presentation.R')
@@ -106,6 +124,24 @@ source('../analysis/statsbier127presentation.R')
 \begin{center}
 <<echo=FALSE, fig=TRUE>>=
   source('../analysis/plotbier127.R')
+@
+\end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{Výsledky Bier127 (optimum \Sexpr{bier127.optimum})}
+\begin{center}
+<<echo=FALSE, fig=TRUE>>=
+  source('../analysis/bier127histogram-noopt.R')
+@
+\end{center}
+\end{frame}
+
+\begin{frame}
+\frametitle{Výsledky Bier127 (optimum \Sexpr{bier127.optimum})}
+\begin{center}
+<<echo=FALSE, fig=TRUE>>=
+  source('../analysis/bier127histogram-twoopt.R')
 @
 \end{center}
 \end{frame}
